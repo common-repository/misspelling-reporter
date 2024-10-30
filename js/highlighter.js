@@ -1,0 +1,74 @@
+( function( window, $ ) {
+	var document = window.document;
+
+	var MisspellingReporter = function() {
+
+		var SELF = this;
+
+		SELF.getSelectionText = function() {
+			var text = "";
+			if ( window.getSelection ) {
+				text = window.getSelection().toString();
+			} else if ( document.selection && document.selection.type != "Control" ) {
+				text = document.selection.createRange().text;
+			}
+			return text;
+		};
+
+		SELF.missrClicked = function( node ) {
+			var data = {
+				action: 'missr_report',
+				post_id: post.post_id,
+				selected: $(node).attr('data-word')
+			};
+			var $dialog = $( document.getElementById( 'missr_dialog' ) );
+
+			$.post( post.ajaxurl, data, function(response) {
+				//console.log('Got this from the server: ' + response);
+			});
+			$dialog.addClass( 'success' );
+			$dialog.text( post.success );
+			setTimeout( function(){
+				$dialog.fadeOut(function(){
+					$dialog.remove();
+				});
+			}, 500 );
+		};
+
+		$(document).ready(function($){
+
+			$( 'body' ).on( 'mouseup', function(e){
+				selected = SELF.getSelectionText();
+				var word = '';
+
+				if ( '' != selected ) {
+
+					var $dialog = $( document.getElementById( 'missr_dialog' ) );
+					$dialog.remove();
+
+					// Retrieve cursor position 
+					xposition = e.pageX + 35;
+					yposition = e.pageY - 10;
+
+					var first_word = selected.split(' ');
+					word = first_word[0];
+				}
+
+				if ( '' ==  word ) {
+					var $dialog = $( document.getElementById( 'missr_dialog' ) );
+					$dialog.fadeOut(function(){
+						$dialog.remove();
+					});
+					return;
+				}
+
+				// Show popdown to report misspelling
+				$( 'body' ).append($('<div id="missr_dialog" onclick="MisspellingReporter.missrClicked(this);" style="top:'+yposition+'px; left:'+xposition+'px;">' + post.click_to_report + '</div>').attr('data-word', word));
+			});
+
+		});
+	};
+
+	window.MisspellingReporter = new MisspellingReporter();
+
+} )( window, jQuery );
